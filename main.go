@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/windyakin/auth-github-pat/cache"
 	"github.com/windyakin/auth-github-pat/config"
@@ -11,6 +13,8 @@ import (
 )
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
@@ -52,6 +56,6 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	log.Printf("listening on :%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
+	slog.Info("server starting", "port", cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, handler.LoggingMiddleware(mux)))
 }
